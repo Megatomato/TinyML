@@ -1,6 +1,9 @@
 import torch, torchvision 
 import torch.nn as nn 
 import torch.nn.functional as F
+import random
+import numpy as np
+from typing import Optional, Sequence, Tuple
 
 def set_device(): 
     if torch.cuda.is_available(): 
@@ -15,27 +18,60 @@ DEVICE = set_device()
 
 def transform_data(): 
     return torchvision.transforms.Compose([
-        torchvision.transforms.Resize((28, 28)),
         torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize((0.1307,), (0.3081,))
+    ])
+    # need to do random transforms here?
+
+def transform_train(): 
+    return torchvision.transforms.Compose([
+        torchvision.transforms.RandomCrop(28, padding=2),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize((0.1307,), (0.3081,))
     ])
 
-def load_datasets(): 
-    train_data = torchvision.datasets.MNIST(root="data", train=True, download=True, transform=transform_data()) #or tfm_train/tfm_eval ? whats the difference here? 
-    test_data = torchvision.datasets.MNIST(root="data", train=False, download=True, transform=transform_data())
-    
-    labels_to_keep = torch.tensor([0, 1, 2, 3, 4, 5, 6])
+def transform_eval(): 
+    return torchvision.transforms.Compose([
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize((0.1307,), (0.3081,))
+    ])
 
-    # Filter training data ... how can i choose the classes here? 
-    train_mask = torch.isin(train_data.targets, labels_to_keep)
-    train_data.data = train_data.data[train_mask]
-    train_data.targets = train_data.targets[train_mask]
+def set_seed(seed: int = 42) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
-    # Filter test data
-    test_mask = torch.isin(test_data.targets, labels_to_keep)
-    test_data.data = test_data.data[test_mask]
-    test_data.targets = test_data.targets[test_mask]
+def load_datasets(data_root: str = "data", download: bool = True): 
+
+    classes = list(range(7))
+
+    train_full = torchvision.datasets.MNIST(
+        root=data_root,
+        train=True,
+        download=download,
+        transform=transform_train(),
+        target_transform=None,
+    )
+    test_full = torchvision.datasets.MNIST(
+        root=data_root,
+        train=False,
+        download=download,
+        transform=transform_eval(),
+        target_transform=None,
+    )
+
+    keep_tensor = torch.tensor(classes)
+    train_mask = torch.isin(train_full.targets, keep_tensor)
+    test_mask = torch.isin(test_full.targets, keep_tensor)
+    train_indices = torch.nonzero(train_mask, as_tuple=False).squeeze(1).tolist()
+    test_indices = torch.nonzero(test_mask, as_tuple=False).squeeze(1).tolist()
+
+    train_data = torch.utils.data.Subset(train_full, train_indices)
+    test_data = torch.utils.data.Subset(test_full, test_indices)
     
-    return train_data, test_data 
+    return train_data, test_data
 
 def make_loaders(train_data, test_data): 
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True)
@@ -63,7 +99,7 @@ class Tiny(nn.Module):
 
 def train_model(model, train_loader, test_loader, epochs=10): 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9)
     
     for epoch in range(epochs): 
         model.train()
@@ -72,6 +108,7 @@ def train_model(model, train_loader, test_loader, epochs=10):
 
 
 if __name__ == "__main__": 
+    set_seed(42)
     train_data, test_data = load_datasets()
     train_loader, test_loader = make_loaders(train_data, test_data)
     model = Tiny().to(DEVICE)
