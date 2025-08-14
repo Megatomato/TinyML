@@ -1,0 +1,17 @@
+# core
+torch
+torchvision
+onnx
+onnxruntime
+numpy
+Pillow
+matplotlib
+
+# quality of life
+tqdm
+tensorboard
+torchinfo
+scipy
+opencv-python
+rich
+pytest
