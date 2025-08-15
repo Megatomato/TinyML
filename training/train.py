@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import random
 import numpy as np
-from typing import Optional, Sequence, Tuple
+from torch.utils.data import random_split, Subset
 
 def set_device(): 
     if torch.cuda.is_available(): 
@@ -21,7 +21,6 @@ def transform_data():
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize((0.1307,), (0.3081,))
     ])
-    # need to do random transforms here?
 
 def transform_train(): 
     return torchvision.transforms.Compose([
@@ -43,40 +42,36 @@ def set_seed(seed: int = 42) -> None:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-def load_datasets(data_root: str = "data", download: bool = True): 
 
-    classes = list(range(7))
 
-    train_full = torchvision.datasets.MNIST(
-        root=data_root,
-        train=True,
-        download=download,
-        transform=transform_train(),
-        target_transform=None,
-    )
-    test_full = torchvision.datasets.MNIST(
-        root=data_root,
-        train=False,
-        download=download,
-        transform=transform_eval(),
-        target_transform=None,
-    )
+def load_datasets(data_root: str = "data", download: bool = True, val_ratio: float = 0.10, seed: int = 1337):
+    classes = list(range(7))  # keep digits 0..6
+    tfm_train = transform_train()
+    tfm_eval  = transform_eval()
 
-    keep_tensor = torch.tensor(classes)
-    train_mask = torch.isin(train_full.targets, keep_tensor)
-    test_mask = torch.isin(test_full.targets, keep_tensor)
-    train_indices = torch.nonzero(train_mask, as_tuple=False).squeeze(1).tolist()
-    test_indices = torch.nonzero(test_mask, as_tuple=False).squeeze(1).tolist()
+    train_full = torchvision.datasets.MNIST(data_root, train=True,  download=download, transform=tfm_train)
+    test_full  = torchvision.datasets.MNIST(data_root, train=False, download=download, transform=tfm_eval)
 
-    train_data = torch.utils.data.Subset(train_full, train_indices)
-    test_data = torch.utils.data.Subset(test_full, test_indices)
-    
-    return train_data, test_data
+    keep = torch.tensor(classes)
+    train_idx = torch.nonzero(torch.isin(train_full.targets, keep)).squeeze(1).tolist()
+    test_idx  = torch.nonzero(torch.isin(test_full.targets,  keep)).squeeze(1).tolist()
 
-def make_loaders(train_data, test_data): 
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=64, shuffle=False)
-    return train_loader, test_loader 
+    train_subset = Subset(train_full, train_idx)
+    test_subset  = Subset(test_full,  test_idx)
+
+    g = torch.Generator().manual_seed(seed)
+    val_len   = max(1, int(len(train_subset) * val_ratio))
+    train_len = len(train_subset) - val_len
+    train_ds, val_ds = random_split(train_subset, [train_len, val_len], generator=g)
+
+    return train_ds, val_ds, test_subset
+
+def make_loaders(train_ds, val_ds, test_ds, batch_size=64, workers=2):
+    train_loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=workers)
+    val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, shuffle=False,  num_workers=workers)
+    test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=workers)
+
+    return train_loader, val_loader, test_loader
 
 class Tiny(nn.Module):
 
@@ -95,17 +90,63 @@ class Tiny(nn.Module):
         return self.fc2(x)                          
 
 
-# Training now? 
+def train_one_epoch(model: nn.Module, loader: torch.utils.data.DataLoader, 
+                    optimizer: torch.optim.Optimizer, criterion: nn.Module, 
+                    device: torch.device, clip_grad: float | None = None):
 
-def train_model(model, train_loader, test_loader, epochs=10): 
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9)
+    model.train()
+
+    running_loss = 0.0
+    running_correct = 0
+    running_total = 0
+
+    for x, y in loader:
+
+        x = x.to(device)
+        y = y.to(device).long()
+
+        optimizer.zero_grad()
+        logits = model(x)
+
+        loss = criterion(logits, y)
+        loss.backward()
+
+        if clip_grad is not None:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
+
+        optimizer.step()
+
+        pred = logits.argmax(dim=1)
+        running_correct += (pred == y).sum().item()
+        running_total += y.size(0)
+        running_loss += loss.item() * y.size(0)
+
+    avg_loss = running_loss / max(running_total, 1)
+    avg_acc  = running_correct / max(running_total, 1)
+    return avg_loss, avg_acc
+
+def evaluate( model: nn.Module, loader: torch.utils.data.DataLoader, criterion: nn.Module, device: torch.device): 
+    model.eval()
     
-    for epoch in range(epochs): 
-        model.train()
-        for batch_idx, (data, target) in enumerate(train_loader): 
-            data, target = data.to(DEVICE), target.to(DEVICE)
+    with torch.no_grad():
+        running_loss = 0.0
+        running_correct = 0
+        running_total = 0
 
+        for x, y in loader:
+            x = x.to(device)
+            y = y.to(device).long()
+
+            logits = model(x)
+            loss = criterion(logits, y)
+            running_loss += loss.item() * y.size(0)
+            running_correct += (logits.argmax(1) == y).sum().item()
+            running_total += y.size(0)
+
+
+    avg_loss = running_loss / max(running_total, 1)
+    avg_acc  = running_correct / max(running_total, 1)
+    return avg_loss, avg_acc
 
 if __name__ == "__main__": 
     set_seed(42)
