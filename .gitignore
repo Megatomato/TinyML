@@ -1,3 +1,32 @@
-*.pyc
-*.gz
-*-ubyte
+data/**
+!data/.gitkeep
+
+# ---- STM32 / CubeIDE (Eclipse CDT) -----------------------------------------
+# build outputs
+stm/**/Debug/
+stm/**/Release/
+stm/**/build/
+stm/**/.dep/
+stm/**/.d/
+stm/**/.gccdump/
+
+# common binary/intermediate files
+*.o
+*.obj
+*.lst
+*.map
+*.elf
+*.axf
+*.out
+*.hex
+*.bin
+*.srec
+*.su
+*.log
+*.tmp
+
+# Cube/IDE caches & misc
+stm/.settings/
+stm/.ai/
+stm/*.launch
+stm/**/.mxproject         

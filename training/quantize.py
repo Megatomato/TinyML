@@ -86,13 +86,12 @@ def quantize():
         model_input=MODEL_INPUT_PATH,
         model_output=MODEL_OUTPUT_PATH,
         calibration_data_reader=data_reader,
-        quant_format=QuantFormat.QOperator,
+        quant_format=QuantFormat.QDQ,
         activation_type=QuantType.QUInt8,
         weight_type=QuantType.QInt8,
         per_channel=True,
         reduce_range=False,
         calibrate_method=CalibrationMethod.MinMax,
-        op_types_to_quantize=["Conv", "Gemm", "MatMul"],
     )
 
 
