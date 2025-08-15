@@ -1,31 +1,29 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2025-08-15 20:55:17
-Parameters            : generate --target stm32f4 --name network -m /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx --compression none --verbosity 1 --workspace /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace5226925524150014343384977410774235 --output /Users/wnedo/.stm32cubemx/network_output
+Created date          : 2025-08-15 23:47:27
+Parameters            : generate --target stm32f4 --name network -m /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx --compression none --verbosity 1 --no-inputs-allocation --no-outputs-allocation --workspace /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace614749680218756369171081176503209 --output /Users/wnedo/.stm32cubemx/network_output
 
 Exec/report summary (generate)
-----------------------------------------------------------------------------------------------------------------------------
-model file         :   /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx                        
-type               :   onnx                                                                                                 
-c_name             :   network                                                                                              
-compression        :   none                                                                                                 
-options            :   allocate-inputs, allocate-outputs                                                                    
-optimization       :   balanced                                                                                             
-target/series      :   stm32f4                                                                                              
-workspace dir      :   /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace5226925524150014343384977410774235    
-output dir         :   /Users/wnedo/.stm32cubemx/network_output                                                             
-model_fmt          :   ss/ua per channel                                                                                    
-model_name         :   tiny_mnist_best_quantized                                                                            
-model_hash         :   0x3a2f234b945524db9b7cf76b84b3f8c4                                                                   
-params #           :   28,979 items (113.20 KiB)                                                                            
-----------------------------------------------------------------------------------------------------------------------------
-input 1/1          :   'input', uint8(1x28x28x1), 784 Bytes, QLinear(0.012728234,33,uint8), activations                     
-output 1/1         :   'logits_QuantizeLin..conversion', uint8(1x7), 7 Bytes, QLinear(0.184269145,142,uint8), activations   
-macc               :   271,563                                                                                              
-weights (ro)       :   108,268 B (105.73 KiB) (1 segment) / -7,648(-6.6%) vs float model                                    
-activations (rw)   :   6,808 B (6.65 KiB) (1 segment) *                                                                     
-ram (total)        :   6,808 B (6.65 KiB) = 6,808 + 0 + 0                                                                   
-----------------------------------------------------------------------------------------------------------------------------
-(*) 'input'/'output' buffers are allocated in the activations buffer
+--------------------------------------------------------------------------------------------------------------------------
+model file         :   /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx                      
+type               :   onnx                                                                                               
+c_name             :   network                                                                                            
+compression        :   none                                                                                               
+optimization       :   balanced                                                                                           
+target/series      :   stm32f4                                                                                            
+workspace dir      :   /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace614749680218756369171081176503209   
+output dir         :   /Users/wnedo/.stm32cubemx/network_output                                                           
+model_fmt          :   ss/ua per channel                                                                                  
+model_name         :   tiny_mnist_best_quantized                                                                          
+model_hash         :   0x3a2f234b945524db9b7cf76b84b3f8c4                                                                 
+params #           :   28,979 items (113.20 KiB)                                                                          
+--------------------------------------------------------------------------------------------------------------------------
+input 1/1          :   'input', uint8(1x28x28x1), 784 Bytes, QLinear(0.012728234,33,uint8), user                          
+output 1/1         :   'logits_QuantizeLin..conversion', uint8(1x7), 7 Bytes, QLinear(0.184269145,142,uint8), user        
+macc               :   271,563                                                                                            
+weights (ro)       :   108,268 B (105.73 KiB) (1 segment) / -7,648(-6.6%) vs float model                                  
+activations (rw)   :   6,808 B (6.65 KiB) (1 segment)                                                                     
+ram (total)        :   7,599 B (7.42 KiB) = 6,808 + 784 + 7                                                               
+--------------------------------------------------------------------------------------------------------------------------
 
 Model name - tiny_mnist_best_quantized
 ------ ---------------------------------------------------------------- --------------------- ---------------- --------- -------------------------------- --- ------------------- --------------------- ------------------------------ 
@@ -91,7 +89,7 @@ m_id   layer (type,original)                                            oshape  
 ------ ---------------------------------------------------------------- --------------------- ---------------- --------- -------------------------------- --- ------------------- --------------------- ------------------------------ 
 31     logits (Conversion, DequantizeLinear)                            [b:1,c:7]                                     14     logits_QuantizeLinear_Output   |                     -14(-100.0%)          
 ------ ---------------------------------------------------------------- --------------------- ---------------- --------- -------------------------------- --- ------------------- --------------------- ------------------------------ 
-model/c-model: macc=297,897/271,563 -26,334(-8.8%) weights=115,916/108,268 -7,648(-6.6%) activations=--/6,808 io=--/0
+model/c-model: macc=297,897/271,563 -26,334(-8.8%) weights=115,916/108,268 -7,648(-6.6%) activations=--/6,808 io=--/791
 
 
 
@@ -126,8 +124,8 @@ c_id   name (*_array)                                                       item
 12     _Relu_output_0_scratch0                                              484/484        activations/**default**   s8                      
 13     _Relu_output_0_scratch1                                              288/288        activations/**default**   u8                      
 14     _Relu_output_0_weights                                               150/150        weights/weights           const s8                
-15     input_output                                                         784/784        activations/**default**   u8            /input    
-16     logits_QuantizeLinear_Input_0_conversion_output                      7/7            activations/**default**   u8            /output   
+15     input_output                                                         784/784        user/                     u8            /input    
+16     logits_QuantizeLinear_Input_0_conversion_output                      7/7            user/                     u8            /output   
 17     logits_QuantizeLinear_Input_bias                                     7/28           weights/weights           const float             
 18     logits_QuantizeLinear_Input_output                                   7/28           activations/**default**   float                   
 19     logits_QuantizeLinear_Input_weights                                  700/2800       weights/weights           const float             
@@ -207,24 +205,24 @@ m_id   name                          c_macc                    c_rom            
 26     _Relu_2_output_0              |||                9.5%   ||||||||||||||||  94.9%   [4]      
 29     logits_QuantizeLinear_Input   |                  0.3%   |                  2.6%   [5, 6]   
 ------ ----------------------------- ------------------------- ------------------------- -------- 
-macc=271,563 weights=108,268 act=6,808 ram_io=0
+macc=271,563 weights=108,268 act=6,808 ram_io=791
  
  Requested memory size by section - "stm32f4" target
  ------------------------------ -------- --------- ------- ------- 
  module                             text    rodata    data     bss 
  ------------------------------ -------- --------- ------- ------- 
  NetworkRuntime1020_CM4_GCC.a     22,244         0       0       0 
- network.o                           672       345   2,620     208 
+ network.o                           644       345   2,620     208 
  network_data.o                       48        16      88       0 
  lib (toolchain)*                  1,928        24       0       0 
  ------------------------------ -------- --------- ------- ------- 
- RT total**                       24,892       385   2,708     208 
+ RT total**                       24,864       385   2,708     208 
  ------------------------------ -------- --------- ------- ------- 
  weights                               0   108,272       0       0 
  activations                           0         0       0   6,808 
- io                                    0         0       0       0 
+ io                                    0         0       0     791 
  ------------------------------ -------- --------- ------- ------- 
- TOTAL                            24,892   108,657   2,708   7,016 
+ TOTAL                            24,864   108,657   2,708   7,807 
  ------------------------------ -------- --------- ------- ------- 
  *  toolchain objects (libm/libgcc*)
  ** RT AI runtime objects (kernels+infrastructure)
@@ -233,9 +231,9 @@ macc=271,563 weights=108,268 act=6,808 ram_io=0
   ---------------------------------------------------
                FLASH (ro)      %*   RAM (rw)       % 
   ---------------------------------------------------
-  RT total         27,985   20.5%      2,916   30.0% 
+  RT total         27,957   20.5%      2,916   27.7% 
   ---------------------------------------------------
-  TOTAL           136,257              9,724         
+  TOTAL           136,229             10,515         
   ---------------------------------------------------
   *  rt/total
 

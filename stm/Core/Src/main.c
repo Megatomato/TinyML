@@ -21,6 +21,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <string.h>
+#include "ai_platform.h"
+#include "network.h"
+#include "network_data.h"
+#include "input_preproc.h"
+#include "mnist_samples.h"
 
 /* USER CODE END Includes */
 
@@ -43,6 +50,11 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+static ai_handle network = AI_HANDLE_NULL;
+AI_ALIGNED(AI_NETWORK_ACTIVATIONS_ALIGNMENT)
+static uint8_t activations[AI_NETWORK_DATA_ACTIVATIONS_SIZE];
+static uint8_t ai_input_u8[AI_NETWORK_IN_1_SIZE];
+static uint8_t ai_output_u8[AI_NETWORK_OUT_1_SIZE];
 
 /* USER CODE END PV */
 
@@ -90,6 +102,149 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  /* Initialize X-CUBE-AI network */
+  {
+    const ai_handle act_addr[] = { activations };
+    const ai_handle wgt_addr[] = { ai_network_data_weights_get() };
+    ai_error err = ai_network_create_and_init(&network, act_addr, wgt_addr);
+    if (err.type != AI_ERROR_NONE) {
+      char msg[96];
+      snprintf(msg, sizeof(msg), "AI init failed: type=%d code=%d\r\n", err.type, err.code);
+      HAL_UART_Transmit(&huart2, (uint8_t*)msg, (uint16_t)strlen(msg), HAL_MAX_DELAY);
+      Error_Handler();
+    }
+  }
+
+  /* Prepare AI buffer descriptors from the network */
+  ai_buffer* ai_input = ai_network_inputs_get(network, NULL);
+  ai_buffer* ai_output = ai_network_outputs_get(network, NULL);
+  ai_output[0].data = (ai_handle)ai_output_u8;
+  /* Ensure buffers have correct metadata when overriding data pointers */
+  ai_input[0].format = AI_NETWORK_IN_1_FORMAT;
+  ai_output[0].format = AI_NETWORK_OUT_1_FORMAT;
+  {
+    char msg[128];
+    int n = snprintf(msg, sizeof(msg),
+                     "bufs: in=%p out=%p in_size=%lu out_size=%lu\r\n",
+                     ai_input[0].data, ai_output[0].data,
+                     (unsigned long)AI_NETWORK_IN_1_SIZE_BYTES,
+                     (unsigned long)AI_NETWORK_OUT_1_SIZE_BYTES);
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, (uint16_t)n, HAL_MAX_DELAY);
+  }
+
+  /* --- Synthetic probes to validate data path --- */
+  {
+    /* Probe 1: all input at zero-point */
+    memset((uint8_t*)ai_input[0].data, 33, AI_NETWORK_IN_1_SIZE_BYTES);
+    memset(ai_output_u8, 0xAA, AI_NETWORK_OUT_1_SIZE_BYTES);
+    ai_i32 nb = ai_network_run(network, ai_input, ai_output);
+    if (nb == 1) {
+      char line[160];
+      uint8_t out_min = 255, out_max = 0;
+      for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+        uint8_t v = ai_output_u8[k];
+        if (v < out_min) out_min = v;
+        if (v > out_max) out_max = v;
+      }
+      int n = snprintf(line, sizeof(line), "probe_zp: out[min=%u max=%u] q=[", out_min, out_max);
+      HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+      for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+        n = snprintf(line, sizeof(line), "%u%s", ai_output_u8[k], (k+1==(int)AI_NETWORK_OUT_1_SIZE)?"]\r\n":", ");
+        HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+      }
+    }
+
+    /* Probe 2: zero-point everywhere, one bright pixel */
+    memset((uint8_t*)ai_input[0].data, 33, AI_NETWORK_IN_1_SIZE_BYTES);
+    ((uint8_t*)ai_input[0].data)[(14*28)+14] = 255; /* center */
+    memset(ai_output_u8, 0xAA, AI_NETWORK_OUT_1_SIZE_BYTES);
+    nb = ai_network_run(network, ai_input, ai_output);
+    if (nb == 1) {
+      char line[160];
+      uint8_t out_min = 255, out_max = 0;
+      for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+        uint8_t v = ai_output_u8[k];
+        if (v < out_min) out_min = v;
+        if (v > out_max) out_max = v;
+      }
+      int n = snprintf(line, sizeof(line), "probe_dot: out[min=%u max=%u] q=[", out_min, out_max);
+      HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+      for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+        n = snprintf(line, sizeof(line), "%u%s", ai_output_u8[k], (k+1==(int)AI_NETWORK_OUT_1_SIZE)?"]\r\n":", ");
+        HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+      }
+    }
+  }
+
+  /* Run inference on at least 10 MNIST images */
+  for (int i = 0; i < MNIST_NUM_SAMPLES; ++i) {
+    preprocess_u8_to_u8_quant_norm(&mnist_images[i][0], ai_input_u8);
+    /* Copy into framework-managed input buffer */
+    memcpy((uint8_t*)ai_input[0].data, ai_input_u8, AI_NETWORK_IN_1_SIZE_BYTES);
+
+    /* Debug: input min/max */
+    uint8_t in_min = 255, in_max = 0;
+    for (int k = 0; k < (int)AI_NETWORK_IN_1_SIZE; ++k) {
+      uint8_t v = ai_input_u8[k];
+      if (v < in_min) in_min = v;
+      if (v > in_max) in_max = v;
+    }
+
+    /* Poison output buffer to detect if runtime writes to it */
+    memset(ai_output_u8, 0xAA, AI_NETWORK_OUT_1_SIZE_BYTES);
+
+    ai_i32 nbatch = ai_network_run(network, ai_input, ai_output);
+    if (nbatch != 1) {
+      ai_error err = ai_network_get_error(network);
+      char msg[96];
+      snprintf(msg, sizeof(msg), "AI run error: type=%d code=%d\r\n", err.type, err.code);
+      HAL_UART_Transmit(&huart2, (uint8_t*)msg, (uint16_t)strlen(msg), HAL_MAX_DELAY);
+      Error_Handler();
+    }
+
+    /* Argmax on quantized outputs (scale>0 so argmax preserved) */
+    /* Read from our output buffer (runtime should have written into it) */
+    const uint8_t* out_u8 = (const uint8_t*)ai_output_u8;
+
+    /* Debug: output min/max */
+    uint8_t out_min = 255, out_max = 0;
+    for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+      uint8_t v = out_u8[k];
+      if (v < out_min) out_min = v;
+      if (v > out_max) out_max = v;
+    }
+
+    int argmax = 0;
+    uint8_t vmax = out_u8[0];
+    for (int k = 1; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+      if (out_u8[k] > vmax) {
+        vmax = out_u8[k];
+        argmax = k;
+      }
+    }
+
+    char line[160];
+    int n = snprintf(line, sizeof(line),
+                     "Sample %d (label=%d): pred=%d, in[min=%u max=%u] out[min=%u max=%u] out=[",
+                     i, mnist_labels[i], argmax, in_min, in_max, out_min, out_max);
+    HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+    for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+      n = snprintf(line, sizeof(line), "%u%s", out_u8[k],
+                   (k + 1 == (int)AI_NETWORK_OUT_1_SIZE) ? "]\r\n" : ", ");
+      HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+    }
+
+    /* Also print centered logits (q - zp) without floats */
+    n = snprintf(line, sizeof(line), " centered=[");
+    HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+    for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
+      int centered = (int)out_u8[k] - 142; /* output zp */
+      n = snprintf(line, sizeof(line), "%d%s", centered,
+                   (k + 1 == (int)AI_NETWORK_OUT_1_SIZE) ? "]\r\n" : ", ");
+      HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
+    }
+  }
 
   /* USER CODE END 2 */
 

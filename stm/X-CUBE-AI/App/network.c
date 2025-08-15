@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    network.c
   * @author  AST Embedded Analytics Research Platform
-  * @date    2025-08-15T20:55:16+1000
+  * @date    2025-08-15T23:47:26+1000
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -42,7 +42,7 @@
 #endif
 
 #undef AI_TOOLS_DATE_TIME
-#define AI_TOOLS_DATE_TIME   "2025-08-15T20:55:16+1000"
+#define AI_TOOLS_DATE_TIME   "2025-08-15T23:47:26+1000"
 
 #undef AI_TOOLS_COMPILE_TIME
 #define AI_TOOLS_COMPILE_TIME    __DATE__ " " __TIME__
@@ -519,7 +519,7 @@ AI_NETWORK_OBJ_DECLARE(
     6808, NULL, NULL),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORK_IN_NUM, &input_output),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORK_OUT_NUM, &logits_QuantizeLinear_Input_0_conversion_output),
-  &_Relu_output_0_layer, 0x93233f0c, NULL)
+  &_Relu_output_0_layer, 0xf45d22fa, NULL)
 
 #else
 
@@ -539,7 +539,7 @@ AI_NETWORK_OBJ_DECLARE(
   ),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORK_IN_NUM, &input_output),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORK_OUT_NUM, &logits_QuantizeLinear_Input_0_conversion_output),
-  &_Relu_output_0_layer, 0x93233f0c, NULL)
+  &_Relu_output_0_layer, 0xf45d22fa, NULL)
 
 #endif	/*(AI_TOOLS_API_VERSION < AI_TOOLS_API_VERSION_1_5)*/
 
@@ -555,12 +555,10 @@ ai_bool network_configure_activations(
   if (ai_platform_get_activations_map(g_network_activations_map, 1, params)) {
     /* Updating activations (byte) offsets */
     
-    input_output_array.data = AI_PTR(g_network_activations_map[0] + 328);
-    input_output_array.data_start = AI_PTR(g_network_activations_map[0] + 328);
-    _Relu_output_0_scratch0_array.data = AI_PTR(g_network_activations_map[0] + 1112);
-    _Relu_output_0_scratch0_array.data_start = AI_PTR(g_network_activations_map[0] + 1112);
-    _Relu_output_0_scratch1_array.data = AI_PTR(g_network_activations_map[0] + 1596);
-    _Relu_output_0_scratch1_array.data_start = AI_PTR(g_network_activations_map[0] + 1596);
+    _Relu_output_0_scratch0_array.data = AI_PTR(g_network_activations_map[0] + 928);
+    _Relu_output_0_scratch0_array.data_start = AI_PTR(g_network_activations_map[0] + 928);
+    _Relu_output_0_scratch1_array.data = AI_PTR(g_network_activations_map[0] + 1412);
+    _Relu_output_0_scratch1_array.data_start = AI_PTR(g_network_activations_map[0] + 1412);
     _Relu_output_0_output_array.data = AI_PTR(g_network_activations_map[0] + 64);
     _Relu_output_0_output_array.data_start = AI_PTR(g_network_activations_map[0] + 64);
     _Relu_1_output_0_scratch0_array.data = AI_PTR(g_network_activations_map[0] + 928);
@@ -577,8 +575,6 @@ ai_bool network_configure_activations(
     _Relu_2_output_0_output_array.data_start = AI_PTR(g_network_activations_map[0] + 0);
     logits_QuantizeLinear_Input_output_array.data = AI_PTR(g_network_activations_map[0] + 400);
     logits_QuantizeLinear_Input_output_array.data_start = AI_PTR(g_network_activations_map[0] + 400);
-    logits_QuantizeLinear_Input_0_conversion_output_array.data = AI_PTR(g_network_activations_map[0] + 0);
-    logits_QuantizeLinear_Input_0_conversion_output_array.data_start = AI_PTR(g_network_activations_map[0] + 0);
     return true;
   }
   AI_ERROR_TRAP(net_ctx, INIT_FAILED, NETWORK_ACTIVATIONS);
@@ -668,7 +664,7 @@ ai_bool ai_network_get_info(
       .params            = AI_STRUCT_INIT,
       .activations       = AI_STRUCT_INIT,
       .n_nodes           = 0,
-      .signature         = 0x93233f0c,
+      .signature         = 0xf45d22fa,
     };
 
     if (!ai_platform_api_get_network_report(network, &r)) return false;
@@ -716,7 +712,7 @@ ai_bool ai_network_get_report(
       .map_weights       = AI_STRUCT_INIT,
       .map_activations   = AI_STRUCT_INIT,
       .n_nodes           = 0,
-      .signature         = 0x93233f0c,
+      .signature         = 0xf45d22fa,
     };
 
     if (!ai_platform_api_get_network_report(network, &r)) return false;
