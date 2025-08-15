@@ -1,7 +1,6 @@
 import os
 import json
 import time
-from typing import Dict, Any
 
 import numpy as np
 import torch
@@ -16,7 +15,7 @@ def transform_eval():
     ])
 
 
-def load_test_dataset(data_root: str = "data", download: bool = True):
+def load_test_dataset(data_root = "data", download = True):
     classes_to_keep = list(range(7)) 
     tfm_eval = transform_eval()
     test_full = torchvision.datasets.MNIST(data_root, train=False, download=download, transform=tfm_eval)
@@ -27,11 +26,11 @@ def load_test_dataset(data_root: str = "data", download: bool = True):
     return test_subset
 
 
-def make_loader(dataset, batch_size: int = 64, workers: int = 2):
+def make_loader(dataset, batch_size = 64, workers = 2):
     return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
 
 
-def evaluate_onnx_model(model_path: str, loader: torch.utils.data.DataLoader, provider: str = "CPUExecutionProvider") -> Dict[str, Any]:
+def evaluate_onnx_model(model_path, loader, provider = "CPUExecutionProvider"):
     assert os.path.exists(model_path), f"Model not found: {model_path}"
 
     size_bytes = os.path.getsize(model_path)
@@ -137,5 +136,3 @@ def compare_and_save():
 
 if __name__ == "__main__":
     compare_and_save()
-
-
