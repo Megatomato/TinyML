@@ -15,13 +15,6 @@ def set_device():
     
 DEVICE = set_device() 
 
-
-def transform_data(): 
-    return torchvision.transforms.Compose([
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize((0.1307,), (0.3081,))
-    ])
-
 def transform_train(): 
     return torchvision.transforms.Compose([
         torchvision.transforms.RandomCrop(28, padding=2),
@@ -67,9 +60,25 @@ def load_datasets(data_root: str = "data", download: bool = True, val_ratio: flo
     return train_ds, val_ds, test_subset
 
 def make_loaders(train_ds, val_ds, test_ds, batch_size=64, workers=2):
-    train_loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=workers)
-    val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, shuffle=False,  num_workers=workers)
-    test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=workers)
+
+    train_loader = torch.utils.data.DataLoader(
+        train_ds,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=workers
+    )
+    val_loader = torch.utils.data.DataLoader(
+        val_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=workers
+    )
+    test_loader = torch.utils.data.DataLoader(
+        test_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=workers
+    )
 
     return train_loader, val_loader, test_loader
 
@@ -150,7 +159,43 @@ def evaluate( model: nn.Module, loader: torch.utils.data.DataLoader, criterion: 
 
 if __name__ == "__main__": 
     set_seed(42)
-    train_data, test_data = load_datasets()
-    train_loader, test_loader = make_loaders(train_data, test_data)
+
+    train_ds, val_ds, test_ds = load_datasets()
+    train_loader, val_loader, test_loader = make_loaders(train_ds, val_ds, test_ds, batch_size=64, workers=2)
+
     model = Tiny().to(DEVICE)
-    train_model(model, train_loader, test_loader, epochs=10)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5)
+    criterion = nn.CrossEntropyLoss()
+
+    epochs = 10
+    best_val_acc = 0.0
+    best_state = None
+
+    print(f"Using device: {DEVICE}")
+    for epoch in range(1, epochs + 1):
+        train_loss, train_acc = train_one_epoch(model, train_loader, optimizer, criterion, DEVICE, clip_grad=1.0)
+        val_loss, val_acc = evaluate(model, val_loader, criterion, DEVICE)
+        scheduler.step()
+
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            best_state = {
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "val_acc": val_acc,
+            }
+
+        print(
+            f"Epoch {epoch:02d}/{epochs} | "
+            f"train_loss={train_loss:.4f} train_acc={train_acc:.4f} | "
+            f"val_loss={val_loss:.4f} val_acc={val_acc:.4f}"
+        )
+
+    if best_state is not None:
+        model.load_state_dict(best_state["model_state_dict"]) 
+        torch.save(best_state, "artifacts/tiny_mnist_best.pt")
+
+    test_loss, test_acc = evaluate(model, test_loader, criterion, DEVICE)
+    print(f"loss={test_loss:.4f} acc={test_acc:.4f}")
