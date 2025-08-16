@@ -1,29 +1,29 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2025-08-16 19:30:06
-Parameters            : generate --target stm32f4 --name network -m /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx --compression none --verbosity 1 --no-inputs-allocation --no-outputs-allocation --workspace /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace7515619670100010572207716565716186 --output /Users/wnedo/.stm32cubemx/network_output
+Created date          : 2025-08-16 22:04:31
+Parameters            : generate --target stm32f4 --name network -m /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx --compression none --verbosity 1 --no-inputs-allocation --no-outputs-allocation --workspace /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace799582169755842915556563163096672 --output /Users/wnedo/.stm32cubemx/network_output
 
 Exec/report summary (generate)
----------------------------------------------------------------------------------------------------------------------------
-model file         :   /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx                       
-type               :   onnx                                                                                                
-c_name             :   network                                                                                             
-compression        :   none                                                                                                
-optimization       :   balanced                                                                                            
-target/series      :   stm32f4                                                                                             
-workspace dir      :   /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace7515619670100010572207716565716186   
-output dir         :   /Users/wnedo/.stm32cubemx/network_output                                                            
-model_fmt          :   ss/ua per channel                                                                                   
-model_name         :   tiny_mnist_best_quantized                                                                           
-model_hash         :   0x3a2f234b945524db9b7cf76b84b3f8c4                                                                  
-params #           :   28,979 items (113.20 KiB)                                                                           
----------------------------------------------------------------------------------------------------------------------------
-input 1/1          :   'input', uint8(1x28x28x1), 784 Bytes, QLinear(0.012728234,33,uint8), user                           
-output 1/1         :   'logits_QuantizeLin..conversion', uint8(1x7), 7 Bytes, QLinear(0.184269145,142,uint8), user         
-macc               :   271,563                                                                                             
-weights (ro)       :   108,268 B (105.73 KiB) (1 segment) / -7,648(-6.6%) vs float model                                   
-activations (rw)   :   6,808 B (6.65 KiB) (1 segment)                                                                      
-ram (total)        :   7,599 B (7.42 KiB) = 6,808 + 784 + 7                                                                
----------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+model file         :   /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx                      
+type               :   onnx                                                                                               
+c_name             :   network                                                                                            
+compression        :   none                                                                                               
+optimization       :   balanced                                                                                           
+target/series      :   stm32f4                                                                                            
+workspace dir      :   /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace799582169755842915556563163096672   
+output dir         :   /Users/wnedo/.stm32cubemx/network_output                                                           
+model_fmt          :   ss/ua per channel                                                                                  
+model_name         :   tiny_mnist_best_quantized                                                                          
+model_hash         :   0x3a2f234b945524db9b7cf76b84b3f8c4                                                                 
+params #           :   28,979 items (113.20 KiB)                                                                          
+--------------------------------------------------------------------------------------------------------------------------
+input 1/1          :   'input', uint8(1x28x28x1), 784 Bytes, QLinear(0.012728234,33,uint8), user                          
+output 1/1         :   'logits_QuantizeLin..conversion', uint8(1x7), 7 Bytes, QLinear(0.184269145,142,uint8), user        
+macc               :   271,563                                                                                            
+weights (ro)       :   108,268 B (105.73 KiB) (1 segment) / -7,648(-6.6%) vs float model                                  
+activations (rw)   :   6,808 B (6.65 KiB) (1 segment)                                                                     
+ram (total)        :   7,599 B (7.42 KiB) = 6,808 + 784 + 7                                                               
+--------------------------------------------------------------------------------------------------------------------------
 
 Model name - tiny_mnist_best_quantized
 ------ ---------------------------------------------------------------- --------------------- ---------------- --------- -------------------------------- --- ------------------- --------------------- ------------------------------ 

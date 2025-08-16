@@ -126,7 +126,12 @@ int main(void)
     preprocess_u8_to_u8_quant_norm(&mnist_images[i][0], ai_input_u8);
     memcpy((uint8_t*)ai_input[0].data, ai_input_u8, AI_NETWORK_IN_1_SIZE_BYTES);
 
+    /* Measure inference latency */
+    uint32_t start_time = HAL_GetTick();
     ai_i32 nbatch = ai_network_run(network, ai_input, ai_output);
+    uint32_t end_time = HAL_GetTick();
+    uint32_t latency_ms = end_time - start_time;
+    
     if (nbatch != 1) {
       Error_Handler();
     }
@@ -143,8 +148,8 @@ int main(void)
     }
 
     char line[160];
-    int n = snprintf(line, sizeof(line), "Sample %d (label=%d): pred=%d, out=[", 
-                     i, mnist_labels[i], argmax);
+    int n = snprintf(line, sizeof(line), "Sample %d (label=%d): pred=%d, latency=%lums, out=[", 
+                     i, mnist_labels[i], argmax, (unsigned long)latency_ms);
     HAL_UART_Transmit(&huart2, (uint8_t*)line, (uint16_t)n, HAL_MAX_DELAY);
     
     for (int k = 0; k < (int)AI_NETWORK_OUT_1_SIZE; ++k) {
