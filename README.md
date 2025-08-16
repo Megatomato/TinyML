@@ -68,7 +68,6 @@ TinyML/
 │       ├── App/network_data.c  # Model weights and parameters
 │       └── App/*.h             # Network interface headers
 ├── sample10/                   # Test images for validation
-└── data/                       # MNIST dataset (if needed)
 ```
 
 ## 🚀 Getting Started
