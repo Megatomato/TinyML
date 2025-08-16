@@ -1,8 +1,8 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2025-08-16 19:30:06
-Parameters            : generate --target stm32f4 --name network -m /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx --compression none --verbosity 1 --no-inputs-allocation --no-outputs-allocation --workspace /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace7515619670100010572207716565716186 --output /Users/wnedo/.stm32cubemx/network_output
+Created date          : 2025-08-16 18:50:16
+Parameters            : validate --target stm32f4 --name network -m /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx --compression none --verbosity 1 --no-inputs-allocation --no-outputs-allocation --workspace /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace7276395547887512832800654174414168 --output /Users/wnedo/.stm32cubemx/network_output --mode target --desc serial:/dev/tty.usbmodem11103:115200
 
-Exec/report summary (generate)
+Exec/report summary (validate)
 ---------------------------------------------------------------------------------------------------------------------------
 model file         :   /Users/wnedo/Desktop/Projects/TinyML/artifacts/tiny_mnist_best_quantized.onnx                       
 type               :   onnx                                                                                                
@@ -10,7 +10,7 @@ c_name             :   network
 compression        :   none                                                                                                
 optimization       :   balanced                                                                                            
 target/series      :   stm32f4                                                                                             
-workspace dir      :   /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace7515619670100010572207716565716186   
+workspace dir      :   /var/folders/nv/w_7s3kv11v7gy879798zkddr0000gn/T/mxAI_workspace7276395547887512832800654174414168   
 output dir         :   /Users/wnedo/.stm32cubemx/network_output                                                            
 model_fmt          :   ss/ua per channel                                                                                   
 model_name         :   tiny_mnist_best_quantized                                                                           
@@ -168,7 +168,88 @@ c_id   name (*_layer)                                                id   layer_
 6      logits_QuantizeLinear_Input_0_conversion                      29   Conversion    14       0        I: logits_QuantizeLinear_Input_output                                   f32(1x7) (18)           
                                                                                                           O: logits_QuantizeLinear_Input_0_conversion_output                      uint8(1x7) (16)         
 ------ ------------------------------------------------------------- ---- ------------- -------- -------- ----------------------------------------------------------------------- ----------------------- 
+ 
+Setting validation data...
+ generating random data, size=10, seed=42, range=(0, 1)
+   I[1]: (10, 28, 28, 1)/float32, min/max=[-0.419994, 2.824752], mean/std=[1.187755, 0.937795]
+    c/I[1] conversion [Q(0.01272823,33)]-> (10, 28, 28, 1)/uint8, min/max=[0, 255], mean/std=[126.319260, 73.678841]
+    m/I[1] no modification.
+ no output/reference samples are provided
+ 
+Running the ST.AI c-model (AI RUNNER)...(name=network, mode=TARGET)
 
+ Proto-buffer driver v2.0 (msg v3.1) (Serial driver v1.0 - /dev/tty.usbmodem11103:115200) ['network']
+  
+  Summary 'network' - ['network']
+  -------------------------------------------------------------------------------------------------------------------
+  I[1/1] 'input_1'    :   uint8[1,28,28,1], 784 Bytes, QLinear(0.012728234,33,uint8), user                           
+  O[1/1] 'output_1'   :   uint8[1,1,1,7], 7 Bytes, QLinear(0.184269145,142,uint8), user                              
+  n_nodes             :   7                                                                                          
+  activations         :   6808                                                                                       
+  weights             :   108268                                                                                     
+  macc                :   271563                                                                                     
+  hash                :   0x3a2f234b945524db9b7cf76b84b3f8c4                                                         
+  compile_datetime    :   Aug 16 2025 18:49:57                                                                       
+  -------------------------------------------------------------------------------------------------------------------
+  protocol            :   Proto-buffer driver v2.0 (msg v3.1) (Serial driver v1.0 - /dev/tty.usbmodem11103:115200)   
+  tools               :   ST.AI (legacy api) v2.2.0                                                                  
+  runtime lib         :   v10.1.0-ae536891 compiled with GCC 12.3.1 (GCC)                                            
+  capabilities        :   IO_ONLY, PER_LAYER, PER_LAYER_WITH_DATA                                                    
+  device.desc         :   stm32 family - 0x421 - STM32F446 @180/180MHz                                               
+  device.attrs        :   fpu,art_lat=5,art_prefetch,art_icache,art_dcache                                           
+  -------------------------------------------------------------------------------------------------------------------
+  
+  ST.AI Profiling results v2.0 - "network"
+  ---------------------------------------------------------------
+  nb sample(s)      :   10                                       
+  duration          :   9.273 ms by sample (9.272/9.273/0.000)   
+  macc              :   271563                                   
+  cycles/MACC       :   6.15                                     
+  CPU cycles        :   [1,669,110]                              
+  used stack/heap   :   not monitored/0 bytes                    
+  ---------------------------------------------------------------
+   
+   Inference time per node
+   ---------------------------------------------------------------------------------------------
+   c_id    m_id   type                   dur (ms)       %    cumul  CPU cycles      name        
+   ---------------------------------------------------------------------------------------------
+   0       14     Conv2dPool (0x109)        4.961   53.5%    53.5%  [   893,053 ]   ai_node_0   
+   1       20     Conv2dPool (0x109)        2.988   32.2%    85.7%  [   537,807 ]   ai_node_1   
+   2       23     Transpose (0x10a)         0.090    1.0%    86.7%  [    16,261 ]   ai_node_2   
+   3       23     NL (0x107)                0.019    0.2%    86.9%  [     3,388 ]   ai_node_3   
+   4       26     Dense (0x104)             1.176   12.7%    99.6%  [   211,694 ]   ai_node_4   
+   5       29     Dense (0x104)             0.036    0.4%   100.0%  [     6,458 ]   ai_node_5   
+   6       29     NL (0x107)                0.002    0.0%   100.0%  [       449 ]   ai_node_6   
+   ---------------------------------------------------------------------------------------------
+   total                                    9.273                   [ 1,669,110 ]               
+   ---------------------------------------------------------------------------------------------
+   
+   Statistic per tensor
+   -----------------------------------------------------------------------------
+   tensor   #    type[shape]:size      min   max      mean      std  name       
+   -----------------------------------------------------------------------------
+   I.0      10   u8[1,28,28,1]:784       0   255   126.319   73.679  input_1    
+   O.0      10   u8[1,1,1,7]:7         120   175   150.329   12.087  output_1   
+   -----------------------------------------------------------------------------
+ 
+Saving validation data...
+ output directory: /Users/wnedo/.stm32cubemx/network_output
+ creating /Users/wnedo/.stm32cubemx/network_output/network_val_io.npz
+ m_outputs_1: (10, 7)/float64, min/max=[-2.395499, 1.842691], mean/std=[-0.300095, 0.932946], logits_QuantizeLinear_Input_0_conversion
+ c_outputs_1: (10, 1, 1, 7)/uint8, min/max=[120, 175], mean/std=[150.328571, 12.087445], scale=0.184269145 zp=142, logits_QuantizeLinear_Input_0_conversion
+
+ 
+Computing the metrics...
+
+ Cross accuracy report #1 (reference vs C-model)
+ ----------------------------------------------------------------------------------------------------
+ notes: - data type is different: r/float64 instead p/uint8
+        - p/uint8 data are dequantized with s=0.18426914513111115 zp=142
+        - ACC metric is not computed ("--classifier" option can be used to force it)
+        - the output of the reference model is used as ground truth/reference value
+        - 10 samples (7 items per sample)
+
+  acc=n.a. rmse=2.402272701 mae=2.050652742 l2r=0.888126552 mean=-1.834794 std=1.561823 nse=-5.535564 cos=0.472659 
 
 
 Number of operations per c-layer
@@ -196,54 +277,29 @@ smul_f32_f32        26,407        9.7%
 smul_f32_u8             14        0.0% 
 
 Complexity report (model)
------- ----------------------------- ------------------------- ------------------------- -------- 
-m_id   name                          c_macc                    c_rom                     c_id     
------- ----------------------------- ------------------------- ------------------------- -------- 
-14     _MaxPool_output_0             |||||||||         33.1%   |                  0.2%   [0]      
-20     _MaxPool_1_output_0           ||||||||||||||||  56.9%   |                  2.3%   [1]      
-23     _Flatten_output_0             |                  0.2%   |                  0.0%   [2, 3]   
-26     _Relu_2_output_0              |||                9.5%   ||||||||||||||||  94.9%   [4]      
-29     logits_QuantizeLinear_Input   |                  0.3%   |                  2.6%   [5, 6]   
------- ----------------------------- ------------------------- ------------------------- -------- 
+------ ----------------------------- ------------------------- ------------------------- -------- -------- ---------------- 
+m_id   name                          c_macc                    c_rom                     c_id     c_dur    l2r (X-CROSS)    
+------ ----------------------------- ------------------------- ------------------------- -------- -------- ---------------- 
+14     _MaxPool_output_0             |||||||||         33.1%   |                  0.2%   [0]       53.5%                    
+20     _MaxPool_1_output_0           ||||||||||||||||  56.9%   |                  2.3%   [1]       32.2%                    
+23     _Flatten_output_0             |                  0.2%   |                  0.0%   [2, 3]     1.2%                    
+26     _Relu_2_output_0              |||                9.5%   ||||||||||||||||  94.9%   [4]       12.7%                    
+29     logits_QuantizeLinear_Input   |                  0.3%   |                  2.6%   [5, 6]     0.4%   8.88126552e-01   
+------ ----------------------------- ------------------------- ------------------------- -------- -------- ---------------- 
 macc=271,563 weights=108,268 act=6,808 ram_io=791
- 
- Requested memory size by section - "stm32f4" target
- ------------------------------ -------- --------- ------- ------- 
- module                             text    rodata    data     bss 
- ------------------------------ -------- --------- ------- ------- 
- NetworkRuntime1020_CM4_GCC.a     22,244         0       0       0 
- network.o                           644       345   2,620     208 
- network_data.o                       48        16      88       0 
- lib (toolchain)*                  1,928        24       0       0 
- ------------------------------ -------- --------- ------- ------- 
- RT total**                       24,864       385   2,708     208 
- ------------------------------ -------- --------- ------- ------- 
- weights                               0   108,272       0       0 
- activations                           0         0       0   6,808 
- io                                    0         0       0     791 
- ------------------------------ -------- --------- ------- ------- 
- TOTAL                            24,864   108,657   2,708   7,807 
- ------------------------------ -------- --------- ------- ------- 
- *  toolchain objects (libm/libgcc*)
- ** RT AI runtime objects (kernels+infrastructure)
-  
-  Summary - "stm32f4" target
-  ---------------------------------------------------
-               FLASH (ro)      %*   RAM (rw)       % 
-  ---------------------------------------------------
-  RT total         27,957   20.5%      2,916   27.7% 
-  ---------------------------------------------------
-  TOTAL           136,229             10,515         
-  ---------------------------------------------------
-  *  rt/total
 
+Evaluation report (summary)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Output       acc    rmse          mae           l2r           mean        std        nse         cos        tensor                                                         
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+X-cross #1   n.a.   2.402272701   2.050652742   0.888126552   -1.834794   1.561823   -5.535564   0.472659   'logits_QuantizeLin..conversion', 10 x uint8(1x7), m_id=[29]   
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Generated files (7)
----------------------------------------------------------------- 
-/Users/wnedo/.stm32cubemx/network_output/network_data_params.h   
-/Users/wnedo/.stm32cubemx/network_output/network_data_params.c   
-/Users/wnedo/.stm32cubemx/network_output/network_data.h          
-/Users/wnedo/.stm32cubemx/network_output/network_data.c          
-/Users/wnedo/.stm32cubemx/network_output/network_config.h        
-/Users/wnedo/.stm32cubemx/network_output/network.h               
-/Users/wnedo/.stm32cubemx/network_output/network.c               
+ acc  : Accuracy (class, axis=-1)
+ rmse : Root Mean Squared Error
+ mae  : Mean Absolute Error
+ l2r  : L2 relative error
+ mean : Mean error
+ std  : Standard deviation error
+ nse  : Nash-Sutcliffe efficiency criteria, bigger is better, best=1, range=(-inf, 1]
+ cos  : COsine Similarity, bigger is better, best=1, range=(0, 1]
